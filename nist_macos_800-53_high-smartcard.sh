@@ -24,12 +24,6 @@ if [ $# = 0 ]; then
  usage
 fi
 
-# Logic for Audit vs. Enforce
-if [ $1 = '--audit' ]; then
-  MODE=audit
-elif [ $1 = '--enforce' ]; then
-  MODE=enforce
-fi
 
 ### Script Work ###
 ## Configure Logging
@@ -50,8 +44,21 @@ function loggy(){
     echo "$(hostname):$TIMESTAMP -> $data" | tee $LOG
   done
 }
+
+# Logic for Audit vs. Enforce
+if [ $1 = '--audit' ]; then
+  MODE=audit
+elif [ $1 = '--enforce' ]; then
+  MODE=enforce
+  if [[ $EUID != 0 ]]; then # Check for sudo
+    echo "You have selected ENFORCE mode and this must be ran with elevated privilege.  Please retry" | loggy
+    exit 2
+  fi
+fi
+
 ################################################################################
 echo "!!!!!!!!BEGINNING WORK!!!!!!!!!!" | loggy
+echo "Audit: Smartcard Authentication" | loggy
 echo "MODE: $MODE" | loggy
 echo "Hostname: $(hostname)" | loggy
 echo "OS Name: $(sw_vers -productName)" | loggy
