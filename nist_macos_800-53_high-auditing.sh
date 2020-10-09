@@ -108,7 +108,7 @@ if [[ $(/bin/ls -lde $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/b
   echo "$RULE: NOT COMPLIANT" | loggy
   if [[ $mode == enforce ]]; then
     echo "Enforcing $RULE" | loggy
-    /bin/chmod -N $(/usr/bin/grep '^dir' /etc/security/audit_control \| /usr/bin/awk -F: '{print $2}')
+    /bin/chmod -N $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
   fi
 else
   echo "$RULE: COMPLIANT" | loggy
@@ -122,7 +122,7 @@ RULE="CCE-84715-2 audit_flags_fm_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags.*fm" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,fm/' /etc/security/audit_control;/usr/sbin/audit -s
   fi
@@ -138,7 +138,7 @@ RULE="CCE-84706-1 audit_auditd_enabled"
 # Rule Logic
 if [[ $(/bin/launchctl list | /usr/bin/grep -c com.apple.auditd) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /bin/launchctl load -w /System/Library/LaunchDaemons/com.apple.auditd.plist
   fi
@@ -154,7 +154,7 @@ RULE="CCE-84712-9 audit_flags_ad_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags.*ad" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,ad/' /etc/security/audit_control; /usr/sbin/audit -s
   fi
@@ -170,7 +170,7 @@ RULE="CCE-84913-3 audit_flags_ex_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags.*-ex" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,-ex/' /etc/security/audit_control; /usr/sbin/audit -s
   fi
@@ -184,9 +184,9 @@ RULE="CCE-84702-0 audit_files_mode_configure"
 # Description: Configure Audit Log Files to Mode 440 or Less Permissive
 
 # Rule Logic
-if [[ $(/bin/ls -l $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}') | /usr/bin/awk '!/-r--r-----\|current\|total/{print $1}' | /usr/bin/wc -l | /usr/bin/tr -d ' ') -ne "0" ]]; then
+if [[ $(/bin/ls -l $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}') | /usr/bin/awk '!/-r--r-----|current|total/{print $1}' | /usr/bin/wc -l | /usr/bin/tr -d ' ') -ne "0" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /bin/chmod 440 $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
   fi
@@ -202,7 +202,7 @@ RULE="CCE-84711-1 audit_flags_aa_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags.*aa" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,aa/' /etc/security/audit_control; /usr/sbin/audit -s
   fi
@@ -218,7 +218,7 @@ RULE="CCE-84710-3 audit_files_owner_configure"
 # Rule Logic
 if [[ $(/bin/ls -n $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}') | /usr/bin/awk '{s+=$3} END {print s}') -ne "0" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/sbin/chown -R root $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
   fi
@@ -234,7 +234,7 @@ RULE="CCE-84719-4 audit_retention_configure"
 # Rule Logic
 if [[ $(/usr/bin/awk -F: '/expire-after/{print $2}' /etc/security/audit_control) != "7d" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak 's/^expire-after.*/expire-after:7d/' /etc/security/audit_control; /usr/sbin/audit -s
   fi
@@ -250,7 +250,7 @@ RULE="CCE-84713-7 audit_flags_fr_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags.*-fr" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,-fr/' /etc/security/audit_control;/usr/sbin/audit -s
   fi
@@ -266,7 +266,7 @@ RULE="CCE-84720-2 audit_settings_failure_notify"
 # Rule Logic
 if [[ $(/usr/bin/grep -c "logger -s -p" /etc/security/audit_warn) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak 's/logger -p/logger -s -p/' /etc/security/audit_warn; /usr/sbin/audit -s
   fi
@@ -282,7 +282,7 @@ RULE="CCE-84718-6 audit_folder_owner_configure"
 # Rule Logic
 if [[ $(/bin/ls -dn $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}') | /usr/bin/awk '{print $3}') -ne "0" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/sbin/chown root $(/usr/bin/awk -F : '/^dir/{print $2}' /etc/security/audit_control)
   fi
@@ -298,7 +298,7 @@ RULE="CCE-84716-0 audit_flags_lo_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags*.lo" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,lo/' /etc/security/audit_control; /usr/sbin/audit -s
   fi
@@ -314,7 +314,7 @@ RULE="CCE-84714-5 audit_flags_fw_configure"
 # Rule Logic
 if [[ $(/usr/bin/grep -Ec "^flags.*-fw" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak '/^flags/ s/$/,-fw/' /etc/security/audit_control;/usr/sbin/audit -s
   fi
@@ -330,9 +330,9 @@ RULE="CCE-84705-3 audit_folders_mode_configure"
 # Rule Logic
 if [[ $(/usr/bin/stat -f %A $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')) -ne "700" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
-    /bin/chmod 700 $(/usr/bin/grep '^dir' /etc/security/audit_control \| /usr/bin/awk -F: '{print $2}')
+    /bin/chmod 700 $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
   fi
 else
   echo "$RULE: COMPLIANT" | loggy
@@ -346,7 +346,7 @@ RULE="CCE-84707-9 audit_configure_capacity_notify"
 # Rule Logic
 if [[ $(/usr/bin/grep -c "^minfree:25" /etc/security/audit_control) -ne "1" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/sed -i.bak 's/.*minfree.*/minfree:25/' /etc/security/audit_control; /usr/sbin/audit -s
   fi
@@ -362,7 +362,7 @@ RULE="CCE-84709-5 audit_files_group_configure"
 # Rule Logic
 if [[ $(/bin/ls -n $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}') | /usr/bin/awk '{s+=$4} END {print s}') -ne "0" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /usr/bin/chgrp -R wheel $(/usr/bin/grep '^dir' /etc/security/audit_control | /usr/bin/awk -F: '{print $2}')
   fi
@@ -378,7 +378,7 @@ RULE="CCE-84701-2 audit_acls_files_configure"
 # Rule Logic
 if [[ $(/bin/ls -le $(/usr/bin/awk -F: '/^dir/{print $2}' /etc/security/audit_control) | /usr/bin/awk '{print $1}' | /usr/bin/grep -c ":") -ne "0" ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /bin/chmod -RN $(/usr/bin/awk -F: '/^dir/{print $2}' /etc/security/audit_control)
   fi
