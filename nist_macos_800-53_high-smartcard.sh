@@ -9,6 +9,12 @@
 
 echo "Beginning CCE Audit for Smartcard Authentication"
 
+# root
+if [[ $EUID != 0 ]]; then # Check for sudo
+    echo "This utility must be ran with elevated privilege.  Please retry"
+    exit 2
+fi
+
 # Check for Args and give help
 program_name=$0
 
@@ -50,10 +56,6 @@ if [ $1 = '--audit' ]; then
   MODE=audit
 elif [ $1 = '--enforce' ]; then
   MODE=enforce
-  if [[ $EUID != 0 ]]; then # Check for sudo
-    echo "You have selected ENFORCE mode and this must be ran with elevated privilege.  Please retry" | loggy
-    exit 2
-  fi
 fi
 
 ################################################################################
@@ -72,9 +74,9 @@ RULE="CCE-84721-0 auth_pam_login_smartcard_enforce"
 # Description: Enforce Multifactor Authentication for Login
 
 # Rule Logic
-if [[ $(/usr/bin/grep -Ecq '^(auth\s+sufficient\s+pam_smartcard.so\|auth\s+required\s+pam_deny.so)' /etc/pam.d/login) != 2 ]]; then
+if [[ $(/usr/bin/grep -Ecq '^(auth\s+sufficient\s+pam_smartcard.so|auth\s+required\s+pam_deny.so)' /etc/pam.d/login) != 2 ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /bin/cat > /etc/pam.d/login << LOGIN_END
 # login: auth account password session
@@ -95,6 +97,8 @@ LOGIN_END
 /bin/chmod 644 /etc/pam.d/login
 /usr/sbin/chown root:wheel /etc/pam.d/login
   fi
+else
+  echo "$RULE: COMPLIANT" | loggy
 fi
 
 ###### ##### #####
@@ -103,9 +107,9 @@ RULE="CCE-84723-6 auth_pam_sudo_smartcard_enforce"
 # Description: Enforce Multifactor Authentication for Privilege Escalation Through the sudo Command
 
 # Rule Logic
-if [[ $(/usr/bin/grep -Ecq  '^(auth\s+sufficient\s+pam_smartcard.so\|auth\s+required\s+pam_deny.so)' /etc/pam.d/sudo) != 2 ]]; then
+if [[ $(/usr/bin/grep -Ecq  '^(auth\s+sufficient\s+pam_smartcard.so|auth\s+required\s+pam_deny.so)' /etc/pam.d/sudo) != 2 ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /bin/cat > /etc/pam.d/sudo << SUDO_END
 # sudo: auth account password session
@@ -120,6 +124,8 @@ SUDO_END
 /bin/chmod 444 /etc/pam.d/sudo
 /usr/sbin/chown root:wheel /etc/pam.d/sudo
   fi
+else
+  echo "$RULE: COMPLIANT" | loggy
 fi
 
 ###### ##### #####
@@ -128,12 +134,14 @@ RULE="CCE-84729-3 auth_ssh_smartcard_enforce"
 # Description: Enforce Smartcard Authentication for SSH
 
 # Rule Logic
-if [[ $(/usr/bin/grep -Ecq '^(PasswordAuthentication\s+no\|ChallengeResponseAuthentication\s+no)' /etc/ssh/sshd_config) != 2 ]]; then
+if [[ $(/usr/bin/grep -Ecq '^(PasswordAuthentication\s+no|ChallengeResponseAuthentication\s+no)' /etc/ssh/sshd_config) != 2 ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
-    /usr/bin/sed -i.bak_$(date "+%Y-%m-%d_%H:%M") "s\|#PasswordAuthentication yes\|PasswordAuthentication no\|; s\|#ChallengeResponseAuthentication yes\|ChallengeResponseAuthentication no\|" /etc/ssh/sshd_config; /bin/launchctl kickstart -k system/com.openssh.sshd
+    /usr/bin/sed -i.bak_$(date "+%Y-%m-%d_%H:%M") "s|#PasswordAuthentication yes|PasswordAuthentication no|; s|#ChallengeResponseAuthentication yes|ChallengeResponseAuthentication no|" /etc/ssh/sshd_config; /bin/launchctl kickstart -k system/com.openssh.sshd
   fi
+else
+  echo "$RULE: COMPLIANT" | loggy
 fi
 
 ###### ##### #####
@@ -142,9 +150,9 @@ RULE="CCE-84722-8 auth_pam_su_smartcard_enforce"
 # Description: Enforce Multifactor Authentication for the su Command
 
 # Rule Logic
-if [[ $(/usr/bin/grep -Ecq '^(auth\s+sufficient\s+pam_smartcard.so\|auth\s+required\s+pam_rootok.so)' /etc/pam.d/su) != 2 ]]; then
+if [[ $(/usr/bin/grep -Ecq '^(auth\s+sufficient\s+pam_smartcard.so|auth\s+required\s+pam_rootok.so)' /etc/pam.d/su) != 2 ]]; then
   echo "$RULE: NOT COMPLIANT" | loggy
-  if [[ $mode == enforce ]]; then
+  if [[ $MODE == enforce ]]; then
     echo "Enforcing $RULE" | loggy
     /bin/cat > /etc/pam.d/su << SU_END
 # su: auth account password session
@@ -161,6 +169,8 @@ SU_END
     /bin/chmod 644 /etc/pam.d/su
     /usr/sbin/chown root:wheel /etc/pam.d/su
   fi
+else
+  echo "$RULE: COMPLIANT" | loggy
 fi
 
 echo "Audit Complete, please see $LOG for details" | loggy
